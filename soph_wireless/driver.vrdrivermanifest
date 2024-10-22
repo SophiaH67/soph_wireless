@@ -1,0 +1,7 @@
+{
+  "alwaysActivate": true,
+  "name": "soph_wireless",
+  "directory": "",
+  "resourceOnly": false,
+  "hmd_presence": []
+}

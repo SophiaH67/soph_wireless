@@ -1,0 +1,27 @@
+﻿C:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.CppBuild.targets(517,5): warning MSB8004: Output Directory does not end with a trailing slash.  This build instance will add the slash as it is required to allow proper evaluation of the Output Directory.
+  controller_device.cpp
+  device_provider.cpp
+  hmd_driver_factory.cpp
+  Generating Code...
+     Creating library C:\Users\sophia\git\soph_wireless\build\driver_soph_wireless\bin\win64\driver_soph_wireless.lib and object C:\Users\sophia\git\soph_wireless\build\driver_soph_wireless\bin\win64\driver_soph_wireless.exp
+  soph_wireless.vcxproj -> C:\Users\sophia\git\soph_wireless\build\driver_soph_wireless\bin\win64\driver_soph_wireless.dll
+  C:\Users\sophia\git\soph_wireless\soph_wireless\driver.vrdrivermanifest
+  C:\Users\sophia\git\soph_wireless\soph_wireless\x64\Debug\controller_device.obj
+  C:\Users\sophia\git\soph_wireless\soph_wireless\x64\Debug\device_provider.obj
+  C:\Users\sophia\git\soph_wireless\soph_wireless\x64\Debug\driver_soph_wireless.dll.recipe
+  C:\Users\sophia\git\soph_wireless\soph_wireless\x64\Debug\driver_soph_wireless.ilk
+  C:\Users\sophia\git\soph_wireless\soph_wireless\x64\Debug\hmd_driver_factory.obj
+  C:\Users\sophia\git\soph_wireless\soph_wireless\x64\Debug\soph_wireless.log
+  C:\Users\sophia\git\soph_wireless\soph_wireless\x64\Debug\vc143.idb
+  C:\Users\sophia\git\soph_wireless\soph_wireless\x64\Debug\vc143.pdb
+  C:\Users\sophia\git\soph_wireless\soph_wireless\x64\Debug\soph_wireless.tlog\CL.command.1.tlog
+  C:\Users\sophia\git\soph_wireless\soph_wireless\x64\Debug\soph_wireless.tlog\Cl.items.tlog
+  C:\Users\sophia\git\soph_wireless\soph_wireless\x64\Debug\soph_wireless.tlog\CL.read.1.tlog
+  C:\Users\sophia\git\soph_wireless\soph_wireless\x64\Debug\soph_wireless.tlog\CL.write.1.tlog
+  C:\Users\sophia\git\soph_wireless\soph_wireless\x64\Debug\soph_wireless.tlog\link.command.1.tlog
+  C:\Users\sophia\git\soph_wireless\soph_wireless\x64\Debug\soph_wireless.tlog\link.read.1.tlog
+  C:\Users\sophia\git\soph_wireless\soph_wireless\x64\Debug\soph_wireless.tlog\link.secondary.1.tlog
+  C:\Users\sophia\git\soph_wireless\soph_wireless\x64\Debug\soph_wireless.tlog\link.write.1.tlog
+  C:\Users\sophia\git\soph_wireless\soph_wireless\x64\Debug\soph_wireless.tlog\soph_wireless.lastbuildstate
+  C:\Users\sophia\git\soph_wireless\soph_wireless\x64\Debug\soph_wireless.tlog\unsuccessfulbuild
+  19 File(s) copied

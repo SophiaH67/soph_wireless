@@ -33,4 +33,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
+  <ItemGroup>
+    <None Include="src\proto\track.proto" />
+    <None Include=".gitignore" />
+    <None Include="send.py" />
+  </ItemGroup>
 </Project>

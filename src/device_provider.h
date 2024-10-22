@@ -1,5 +1,8 @@
 #pragma once
+#pragma comment(lib, "Ws2_32.lib")
+#include <ws2tcpip.h>
 #include <memory>
+#include <winsock2.h>
 
 #include "controller_device.h"
 #include "openvr_driver.h"
@@ -18,3 +21,5 @@ private:
     std::unique_ptr<ControllerDevice> my_left_device_;
     std::unique_ptr<ControllerDevice> my_right_device_;
 };
+
+void vserver();

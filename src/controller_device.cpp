@@ -1,12 +1,12 @@
 #include "controller_device.h"
+#include <format>
 
-ControllerDevice::ControllerDevice(vr::ETrackedControllerRole role) : role_(role), device_id_(vr::k_unTrackedDeviceIndexInvalid) {};
+ControllerDevice::ControllerDevice(char serial[32]) : serial_(serial), last_pose_{0}, device_id_(vr::k_unTrackedDeviceIndexInvalid) {};
 
 vr::EVRInitError ControllerDevice::Activate(uint32_t unObjectId) {
-    vr::VRDriverLog()->Log("ControllerDevice::Activate");
+    vr::VRDriverLog()->Log(std::format("ControllerDevice::Activate ({})", unObjectId).c_str());
 
     const vr::PropertyContainerHandle_t container = vr::VRProperties()->TrackedDeviceToPropertyContainer(unObjectId);
-    vr::VRProperties()->SetInt32Property(container, vr::Prop_ControllerRoleHint_Int32, role_);
     vr::VRProperties()->SetStringProperty(container, vr::Prop_ModelNumber_String, "soph_tracker");
 
     device_id_ = unObjectId;
@@ -28,32 +28,24 @@ void ControllerDevice::DebugRequest(const char* pchRequest, char* pchResponseBuf
         pchResponseBuffer[0] = 0;
 }
 
-vr::DriverPose_t ControllerDevice::GetPose() {
-    vr::DriverPose_t pose = { 0 };
-
-    pose.poseIsValid = true;
-    pose.result = vr::TrackingResult_Running_OK;
-    pose.deviceIsConnected = true;
-
+void ControllerDevice::ReceivedTrackerUpdate(TrackerUpdatePacket* packet) {
+    vr::DriverPose_t pose = {0};
+    
+    pose.deviceIsConnected = packet->deviceIsConnected;
+    pose.poseIsValid = packet->poseIsValid;
+    pose.qRotation = packet->qRotation;
+    pose.result = packet->result;
+    memcpy(pose.vecPosition, packet->vecPosition, sizeof(packet->vecPosition));
+    
     pose.qWorldFromDriverRotation.w = 1.f;
     pose.qDriverFromHeadRotation.w = 1.f;
 
-    pose.qRotation.w = 1.f;
+    last_pose_ = pose;
 
-    vr::TrackedDevicePose_t hmd_pose{};
-    vr::VRServerDriverHost()->GetRawTrackedDevicePoses(0.f, &hmd_pose, 1);
-
-    pose.vecPosition[0] = role_ == vr::TrackedControllerRole_LeftHand
-        ? hmd_pose.mDeviceToAbsoluteTracking.m[0][3] - 0.2f
-        : hmd_pose.mDeviceToAbsoluteTracking.m[0][3] + 0.2f; // set the x position offset based on whether we are a left or right hand (so the controllers don't appear on top of eachother). This will
-    // make it look like two controllers appearing side by side, 0.4 metres apart.
-
-    pose.vecPosition[1] = hmd_pose.mDeviceToAbsoluteTracking.m[1][3];		// no vertical offset
-    pose.vecPosition[2] = hmd_pose.mDeviceToAbsoluteTracking.m[2][3] - 0.5f; // make the controller appear half a metre in front of the hmd (-z is forward in space)
-
-    return pose;
+    vr::VRDriverLog()->Log("Survived till right before function call...");
+    vr::VRServerDriverHost()->TrackedDevicePoseUpdated(device_id_, pose, sizeof(vr::DriverPose_t));
 }
 
-void ControllerDevice::RunFrame() {
-    vr::VRServerDriverHost()->TrackedDevicePoseUpdated(device_id_, GetPose(), sizeof(vr::DriverPose_t));
+vr::DriverPose_t ControllerDevice::GetPose() {
+    return last_pose_;
 }

@@ -178,6 +178,7 @@
   <ItemGroup>
     <ClInclude Include="src\controller_device.h" />
     <ClInclude Include="src\device_provider.h" />
+    <ClInclude Include="src\packet.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include=".gitignore" />

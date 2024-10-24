@@ -32,6 +32,9 @@
     <ClInclude Include="src\device_provider.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="src\packet.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="src\proto\track.proto" />

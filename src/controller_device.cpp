@@ -66,6 +66,7 @@ void ControllerDevice::ReceivedPropUpdate(PropertyUpdatePacket* packet) {
             break;
         }
         case UpdateValueType::STRING: {
+            vr::VRDriverLog()->Log(std::format("Got string update for prop {} to '{}'", (int)packet->property, packet->value_string).c_str());
             vr::VRProperties()->SetStringProperty(container, packet->property, packet->value_string);
             break;
         }

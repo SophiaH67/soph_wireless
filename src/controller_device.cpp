@@ -42,8 +42,42 @@ void ControllerDevice::ReceivedTrackerUpdate(TrackerUpdatePacket* packet) {
 
     last_pose_ = pose;
 
-    vr::VRDriverLog()->Log("Survived till right before function call...");
     vr::VRServerDriverHost()->TrackedDevicePoseUpdated(device_id_, pose, sizeof(vr::DriverPose_t));
+}
+
+void ControllerDevice::ReceivedPropUpdate(PropertyUpdatePacket* packet) {
+    const vr::PropertyContainerHandle_t container = vr::VRProperties()->TrackedDeviceToPropertyContainer(device_id_);
+    switch (packet->type)
+    {
+        case UpdateValueType::BOOOL: {
+            vr::VRProperties()->SetBoolProperty(container, packet->property, packet->value_string);
+            break;
+        }
+        case UpdateValueType::FLOOAT: {
+            vr::VRProperties()->SetFloatProperty(container, packet->property, packet->value_float);
+            break;
+        }
+        case UpdateValueType::INT32_T: {
+            vr::VRProperties()->SetInt32Property(container, packet->property, packet->value_int32);
+            break;
+        }
+        case UpdateValueType::MATRIX34: {
+            //vr::VRProperties()->SetM34(container, packet->property, packet->value_int32);
+            break;
+        }
+        case UpdateValueType::STRING: {
+            vr::VRProperties()->SetStringProperty(container, packet->property, packet->value_string);
+            break;
+        }
+        case UpdateValueType::UINT64_T: {
+            vr::VRProperties()->SetUint64Property(container, packet->property, packet->value_uint64);
+            break;
+        }
+        default: {
+            vr::VRDriverLog()->Log(std::format("Unknown value type {} for tracker '{}'", (int)packet->type, device_id_).c_str());
+            break;
+        }
+    }
 }
 
 vr::DriverPose_t ControllerDevice::GetPose() {

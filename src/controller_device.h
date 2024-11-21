@@ -14,6 +14,7 @@ public:
     virtual void* GetComponent(const char* pchComponentNameAndVersion) override;
     virtual void DebugRequest(const char* pchRequest, char* pchResponseBuffer, uint32_t unResponseBufferSize) override;
     void ReceivedTrackerUpdate(TrackerUpdatePacket* packet);
+    void ReceivedPropUpdate(PropertyUpdatePacket* packet);
     virtual vr::DriverPose_t GetPose() override;
 
 private:

@@ -50,35 +50,47 @@ void vserver() {
 
 	while (true) {
 		recvfrom(server_socket, RecvBuf, BufLen, 0, (SOCKADDR*)&sender_addr, &sender_addr_size);
-		vr::VRDriverLog()->Log("Received packet");
 		Packet* packet = (struct Packet*)RecvBuf;
 
-		switch (packet->packet_type)
+		std::string serial(packet->serial);
+
+		if (known_trackers.find(serial) == known_trackers.end()) {
+			known_trackers[serial] = std::make_unique<ControllerDevice>(packet->serial);
+
+			vr::VRServerDriverHost()->TrackedDeviceAdded(packet->serial,
+				vr::TrackedDeviceClass_GenericTracker,
+				known_trackers[serial].get());
+			vr::VRDriverLog()->Log("Sleeping for 1 second to avoid calling into uninitialized controller...");
+			std::this_thread::sleep_for(std::chrono::seconds(1));
+		}
+
+		switch (packet->type)
 		{
 			case TRACKER_UPDATE: {
-				TrackerUpdatePacket* tracker_message = (struct TrackerUpdatePacket*)packet->packet;
-				vr::VRDriverLog()->Log(std::format("Got tracker update {} {} {} from tracker '{}'", tracker_message->vecPosition[0], tracker_message->vecPosition[1], tracker_message->vecPosition[2], tracker_message->serial).c_str());
-				std::string serial(tracker_message->serial);
-
-				if (known_trackers.find(tracker_message->serial) == known_trackers.end()) {
-					known_trackers[serial] = std::make_unique<ControllerDevice>(tracker_message->serial);
-
-					vr::VRServerDriverHost()->TrackedDeviceAdded(tracker_message->serial,
-						vr::TrackedDeviceClass_GenericTracker,
-						known_trackers[serial].get());
-					vr::VRDriverLog()->Log("Sleeping for 1 second to avoid calling into uninitialized controller...");
-					std::this_thread::sleep_for(std::chrono::seconds(1));
-				}
-				vr::VRDriverLog()->Log("Updating pose...");
+				TrackerUpdatePacket* tracker_message = &packet->tracker_update;
+				//vr::VRDriverLog()->Log(std::format("Got tracker update {} {} {} from tracker '{}'", tracker_message->vecPosition[0], tracker_message->vecPosition[1], tracker_message->vecPosition[2], packet->serial).c_str());
 				if (known_trackers[serial] != nullptr) {
-					vr::VRDriverLog()->Log("Sending tracker update...");
 					known_trackers[serial]->ReceivedTrackerUpdate(tracker_message);
+				}
+				else {
+					vr::VRDriverLog()->Log(std::format("Attempted to update position on nullptr tracker with serial '{}'", serial).c_str());
 				}
 
 				break;
 			}
+			case PROP_UPDATE: {
+				PropertyUpdatePacket* prop_message = &packet->property_update;
+				vr::VRDriverLog()->Log(std::format("Got prop update of type '{}' of property '{}' from tracker '{}'", (int)prop_message->type,(int)prop_message->property, serial).c_str());
+				if (known_trackers[serial] != nullptr) {
+					known_trackers[serial]->ReceivedPropUpdate(prop_message);
+				}
+				else {
+					vr::VRDriverLog()->Log(std::format("Attempted to update prop on nullptr tracker with serial '{}'", serial).c_str());
+				}
+				break;
+			}
 			default: {
-				vr::VRDriverLog()->Log(std::format("Received unknown packet: {}", (int)packet->packet_type).c_str());
+				vr::VRDriverLog()->Log(std::format("Received unknown packet: {}", (int)packet->type).c_str());
 				break;
 			}
 		}

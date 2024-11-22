@@ -1,13 +1,18 @@
 #include "controller_device.h"
 #include <format>
 
-ControllerDevice::ControllerDevice(char serial[32]) : serial_(serial), last_pose_{0}, device_id_(vr::k_unTrackedDeviceIndexInvalid) {};
+ControllerDevice::ControllerDevice(char serial[32], DeviceRegisterPacket* p) : serial_(serial), register_packet_(*p), last_pose_{0}, device_id_(vr::k_unTrackedDeviceIndexInvalid) {};
 
 vr::EVRInitError ControllerDevice::Activate(uint32_t unObjectId) {
     vr::VRDriverLog()->Log(std::format("ControllerDevice::Activate ({})", unObjectId).c_str());
 
     const vr::PropertyContainerHandle_t container = vr::VRProperties()->TrackedDeviceToPropertyContainer(unObjectId);
-    vr::VRProperties()->SetStringProperty(container, vr::Prop_ModelNumber_String, "soph_tracker");
+
+    for (const PropertyUpdatePacket p : register_packet_.properties)
+    {
+        ReceivedPropUpdate(&p, container);
+    }
+
 
     device_id_ = unObjectId;
     return vr::VRInitError_None;
@@ -28,7 +33,7 @@ void ControllerDevice::DebugRequest(const char* pchRequest, char* pchResponseBuf
         pchResponseBuffer[0] = 0;
 }
 
-void ControllerDevice::ReceivedTrackerUpdate(TrackerUpdatePacket* packet) {
+void ControllerDevice::ReceivedTrackerUpdate(const TrackerUpdatePacket* packet) {
     vr::DriverPose_t pose = {0};
     
     pose.deviceIsConnected = packet->deviceIsConnected;
@@ -45,32 +50,38 @@ void ControllerDevice::ReceivedTrackerUpdate(TrackerUpdatePacket* packet) {
     vr::VRServerDriverHost()->TrackedDevicePoseUpdated(device_id_, pose, sizeof(vr::DriverPose_t));
 }
 
-void ControllerDevice::ReceivedPropUpdate(PropertyUpdatePacket* packet) {
-    const vr::PropertyContainerHandle_t container = vr::VRProperties()->TrackedDeviceToPropertyContainer(device_id_);
+void ControllerDevice::ReceivedPropUpdate(const PropertyUpdatePacket* packet, const std::optional<vr::PropertyContainerHandle_t> container_override = std::nullopt) {
+    vr::PropertyContainerHandle_t container;
+    if (container_override) 
+        container = container_override.value();
+    
+    else
+        container = vr::VRProperties()->TrackedDeviceToPropertyContainer(device_id_);
+
     switch (packet->type)
     {
-        case UpdateValueType::BOOOL: {
+        case PropValueType::BOOOL: {
             vr::VRProperties()->SetBoolProperty(container, packet->property, packet->value_string);
             break;
         }
-        case UpdateValueType::FLOOAT: {
+        case PropValueType::FLOOAT: {
             vr::VRProperties()->SetFloatProperty(container, packet->property, packet->value_float);
             break;
         }
-        case UpdateValueType::INT32_T: {
+        case PropValueType::INT32_T: {
             vr::VRProperties()->SetInt32Property(container, packet->property, packet->value_int32);
             break;
         }
-        case UpdateValueType::MATRIX34: {
+        case PropValueType::MATRIX34: {
             //vr::VRProperties()->SetM34(container, packet->property, packet->value_int32);
             break;
         }
-        case UpdateValueType::STRING: {
+        case PropValueType::STRING: {
             vr::VRDriverLog()->Log(std::format("Got string update for prop {} to '{}'", (int)packet->property, packet->value_string).c_str());
             vr::VRProperties()->SetStringProperty(container, packet->property, packet->value_string);
             break;
         }
-        case UpdateValueType::UINT64_T: {
+        case PropValueType::UINT64_T: {
             vr::VRProperties()->SetUint64Property(container, packet->property, packet->value_uint64);
             break;
         }

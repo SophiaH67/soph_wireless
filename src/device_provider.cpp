@@ -6,20 +6,10 @@ void DeviceProvider::handle_packet(Packet *packet)  {
 
 	std::lock_guard<std::mutex> known_trackers_lock(known_trackers_mutex);
 
-	if (known_trackers.find(serial) == known_trackers.end()) {
-		known_trackers.insert({ serial, std::make_unique<ControllerDevice>(packet->serial) });
-
-
-		vr::VRServerDriverHost()->TrackedDeviceAdded(packet->serial,
-			vr::TrackedDeviceClass_GenericTracker,
-			known_trackers.at(serial).get());
-		vr::VRDriverLog()->Log("Sleeping for 1 second to avoid calling into uninitialized controller...");
-		std::this_thread::sleep_for(std::chrono::seconds(1));
-	}
-
 	switch (packet->type)
 	{
-		case TRACKER_UPDATE: {
+		case SMALL_TRACKER_UPDATE: {
+			if (known_trackers.find(serial) == known_trackers.end()) return;
 			TrackerUpdatePacket* tracker_message = &packet->tracker_update;
 			//vr::VRDriverLog()->Log(std::format("Got tracker update {} {} {} from tracker '{}'", tracker_message->vecPosition[0], tracker_message->vecPosition[1], tracker_message->vecPosition[2], packet->serial).c_str());
 			if (known_trackers[serial] != nullptr) {
@@ -31,14 +21,30 @@ void DeviceProvider::handle_packet(Packet *packet)  {
 
 			break;
 		}
-		case PROP_UPDATE: {
+		case SMALL_PROP_UPDATE: {
+			if (known_trackers.find(serial) == known_trackers.end()) return;
 			PropertyUpdatePacket* prop_message = &packet->property_update;
-			vr::VRDriverLog()->Log(std::format("Got prop update of type '{}' of property '{}' from tracker '{}'", (int)prop_message->type, (int)prop_message->property, serial).c_str());
+			//vr::VRDriverLog()->Log(std::format("Got prop update of type '{}' of property '{}' from tracker '{}'", (int)prop_message->type, (int)prop_message->property, serial).c_str());
 			if (known_trackers[serial] != nullptr) {
-				known_trackers[serial]->ReceivedPropUpdate(prop_message);
+				known_trackers[serial]->ReceivedPropUpdate(prop_message, std::nullopt);
 			}
 			else {
 				vr::VRDriverLog()->Log(std::format("Attempted to update prop on nullptr tracker with serial '{}'", serial).c_str());
+			}
+			break;
+		}
+		case BIG_DEVICE_REGISTER: {
+			BigPacket* big_packet = (BigPacket*) packet;
+			DeviceRegisterPacket* register_message = &big_packet->device_register;
+			if (known_trackers.find(serial) == known_trackers.end()) {
+				known_trackers.insert({ serial, std::make_unique<ControllerDevice>(packet->serial, register_message) });
+
+				vr::VRServerDriverHost()->TrackedDeviceAdded(packet->serial,
+					register_message->device_class,
+					known_trackers.at(serial).get());
+			}
+			else {
+				vr::VRDriverLog()->Log(std::format("Got request to re-register tracker '{}'. Ignoring", serial).c_str());
 			}
 			break;
 		}
@@ -70,8 +76,8 @@ void DeviceProvider::udp_vserver() {
 		return;
 	}
 
-	char RecvBuf[sizeof(Packet)];
-	int BufLen = sizeof(Packet);
+	char RecvBuf[sizeof(BigPacket)];
+	int BufLen = sizeof(BigPacket);
 	struct sockaddr_in sender_addr {};
 	int sender_addr_size = sizeof(sender_addr);
 
@@ -124,8 +130,8 @@ void DeviceProvider::tcp_vserver() {
 		inet_ntop(AF_INET, &sender_addr.sin_addr, ipStr, sizeof(ipStr));
 		vr::VRDriverLog()->Log(std::format("Got TCP connection from {}:{}", ipStr, sender_addr.sin_port).c_str());
 
-		char RecvBuf[sizeof(Packet)];
-		int BufLen = sizeof(Packet);
+		char RecvBuf[sizeof(BigPacket)];
+		int BufLen = sizeof(BigPacket);
 
 		while (true) {
 			int rbyteCount = recv(socket, RecvBuf, BufLen, 0);

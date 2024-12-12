@@ -1,7 +1,7 @@
 #include "controller_device.h"
 #include <format>
 
-ControllerDevice::ControllerDevice(char serial[32], DeviceRegisterPacket* p) : serial_(serial), register_packet_(*p), last_pose_{0}, device_id_(vr::k_unTrackedDeviceIndexInvalid) {};
+ControllerDevice::ControllerDevice(char serial[32], DeviceRegisterPacket* p) : serial_(serial), register_packet_(*p), lastTrackerUpdateReceivedUnix_{ 0 }, last_pose_ { 0 }, device_id_(vr::k_unTrackedDeviceIndexInvalid) {};
 
 vr::EVRInitError ControllerDevice::Activate(uint32_t unObjectId) {
     vr::VRDriverLog()->Log(std::format("ControllerDevice::Activate ({})", unObjectId).c_str());
@@ -34,6 +34,9 @@ void ControllerDevice::DebugRequest(const char* pchRequest, char* pchResponseBuf
 }
 
 void ControllerDevice::ReceivedTrackerUpdate(const TrackerUpdatePacket* packet) {
+    if (packet->unixTimestamp < lastTrackerUpdateReceivedUnix_) return;
+    lastTrackerUpdateReceivedUnix_ = packet->unixTimestamp;
+
     vr::DriverPose_t pose = {0};
     
     pose.deviceIsConnected = packet->deviceIsConnected;

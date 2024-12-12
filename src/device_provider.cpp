@@ -2,7 +2,7 @@
 #include <format>
 
 void DeviceProvider::handle_packet(Packet *packet)  {
-	std::string serial(packet->serial);
+	std::string serial(packet->serial); 
 
 	std::lock_guard<std::mutex> known_trackers_lock(known_trackers_mutex);
 
@@ -135,7 +135,7 @@ void DeviceProvider::tcp_vserver() {
 
 		while (true) {
 			int rbyteCount = recv(socket, RecvBuf, BufLen, 0);
-			if (rbyteCount < 0) {
+			if (rbyteCount < 1) { // 0 = disconnected gracefully
 				vr::VRDriverLog()->Log(std::format("Error receiving on socket: {}\n", WSAGetLastError()).c_str());
 				break;
 			}

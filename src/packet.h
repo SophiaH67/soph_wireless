@@ -80,6 +80,7 @@ struct TrackerUpdatePacket {
 	vr::ETrackingResult result;
 	bool poseIsValid;
 	bool deviceIsConnected;
+	long long unixTimestamp;
 };
 
 enum PropValueType {

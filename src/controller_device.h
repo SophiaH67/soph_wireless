@@ -23,4 +23,5 @@ private:
 	vr::DriverPose_t last_pose_;
 	char* serial_;
 	const DeviceRegisterPacket register_packet_;
+	long long lastTrackerUpdateReceivedUnix_;
 };
